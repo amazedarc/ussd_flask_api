@@ -1,11 +1,13 @@
+from flask import session
 from models.user import UserModel
 import hashlib
 
 
 def authenticate(numepoli, password):
-    user = UserModel.find_by_username(numepoli)
-    user_pin = hashlib(user.password.decode())
-    if user and user_pin == password:
+    user = UserModel.find_by_numepoli(numepoli)
+    password_hash = hashlib.md5("{}".format(password).encode()).hexdigest()
+    if user and user.password == password_hash:
+        session["numepoli"] = user.numepoli
         return user
 
 
