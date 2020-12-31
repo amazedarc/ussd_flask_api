@@ -5,6 +5,7 @@ from resources.item import Item
 from resources.user import UserRegister, User, UserList
 from resources.assure import Assure, AssureList
 from resources.risque import Risque, RisqueList
+from resources.avance import Avance
 from secure import authenticate, identity
 
 app = Flask(__name__)
@@ -31,6 +32,7 @@ api.add_resource(User, "/user/<int:numepoli>")
 api.add_resource(UserList, "/users")
 api.add_resource(AssureList, "/assures")
 api.add_resource(Assure, "/assure/<int:codeassu>")
+api.add_resource(Avance, "/avance")
 api.add_resource(RisqueList, "/risques")
 api.add_resource(Risque, "/risque")
 
