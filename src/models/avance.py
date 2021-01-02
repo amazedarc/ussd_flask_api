@@ -12,7 +12,6 @@ class AvanceModel(db.Model):
     dureremb = db.Column(db.Integer)
     montremb = db.Column(db.Integer)
     reliremb = db.Column(db.Integer)
-    risque = db.relationship("RisqueModel")
 
     def __init__(
         self,
@@ -38,7 +37,7 @@ class AvanceModel(db.Model):
 
     @classmethod
     def find_avance_numepoli(cls, numepoli):
-        return cls.query.filter_by(numepoli=numepoli).first()
+        return cls.query.filter_by(numepoli=numepoli).all()
 
     def json(self):
         return {

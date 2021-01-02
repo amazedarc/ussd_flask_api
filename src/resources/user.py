@@ -20,7 +20,7 @@ class UserRegister(Resource):
     )
     parser.add_argument(
         "telephone",
-        type=int,
+        type=str,
         required=True,
         help="The user telephone filed can not be empty",
     )
@@ -48,9 +48,9 @@ class UserRegister(Resource):
             risque = RisqueModel.find_by_numepoli(data.numepoli)
             if risque is not None and risque.numepoli == data.numepoli:
                 assure = AssureModel.find_by_codeassu(risque.codeassu)
-                if int(assure.teleassu) == data.telephone:
-                    user = UserModel(**data)
-                return {"message": "Your number doesn't match the existing one"}
+                if assure.teleassu != data.telephone:
+                    return {"message": "Your number doesn't match the existing one"}
+                user = UserModel(**data)
             user.save_to_db()
         else:
             return {"message": "user with numepoli {} exist".format(data.numepoli)}, 400
