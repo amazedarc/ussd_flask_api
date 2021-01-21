@@ -1,6 +1,7 @@
 from db import db
 from uuid import uuid4
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import UUID
 import hashlib
 import pytz
 from werkzeug.security import generate_password_hash
@@ -8,38 +9,23 @@ from werkzeug.security import generate_password_hash
 
 class UserModel(db.Model):
     __tablename__ = "users"
-    id = db.Column(db.String(80), primary_key=True)
-    name = db.Column(db.String(80))
-    numepoli = db.Column(db.Integer)
-    cin = db.Column(db.String(80))
-    password = db.Column(db.String(80))
-    telephone = db.Column(db.Integer)
-    date_naissance = db.Column(db.Date)
-    created_at = db.Column(db.Date)
-    date_naissance = db.Column(db.Date)
-
-    def __init__(
-        self,
-        name,
-        numepoli,
-        cin,
-        password,
-        telephone,
-        date_naissance,
-        created_at=None,
-    ):
-        self.id = uuid4().hex
-        self.name = name
-        self.numepoli = numepoli
-        self.cin = cin
-        self.password = hashlib.md5("{}".format(password).encode()).hexdigest()
-        self.created_at = (
-            datetime.utcnow()
-            .replace(tzinfo=pytz.utc)
-            .astimezone(pytz.timezone("AFRICA/BUJUMBURA"))
-        )
-        self.telephone = telephone
-        self.date_naissance = datetime.strptime(date_naissance, "%d/%m/%Y")
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = db.Column(db.String(80), nullable=False)
+    numepoli = db.Column(db.Integer, nullable=False, unique=True)
+    cin = db.Column(db.String(80), nullable=False, unique=True)
+    password = db.Column(db.String(128), nullable=False)
+    telephone = db.Column(db.Integer, nullable=False, unique=True)
+    date_naissance = db.Column(
+        db.String(15),
+        nullable=False,
+    )
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow()
+        .replace(tzinfo=pytz.utc)
+        .astimezone(pytz.timezone("AFRICA/BUJUMBURA")),
+        nullable=False,
+    )
 
     def save_to_db(self):
         db.session.add(self)

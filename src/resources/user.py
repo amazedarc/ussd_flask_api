@@ -1,61 +1,32 @@
-from flask_restful import Resource, reqparse
+from flask_restful import Resource
+from flask import request
+from marshmallow import ValidationError
+from werkzeug.security import safe_str_cmp
 from flask_jwt import jwt_required
 from models.user import UserModel
 import hashlib
 from models.risque import RisqueModel
 from models.assure import AssureModel
+from schemas.users import Userschema
+
+user_schema = Userschema()
 
 
 class UserRegister(Resource):
-    parser = reqparse.RequestParser()
+    @classmethod
+    def post(cls):
+        try:
+            user_data = user_schema.load(request.get_json())
+        except ValidationError as err:
+            return err.messages, 400
 
-    parser.add_argument(
-        "name", type=str, required=True, help="The user name filed can not be empty"
-    )
-    parser.add_argument(
-        "numepoli",
-        type=int,
-        required=True,
-        help="The user numepoli filed can not be empty",
-    )
-    parser.add_argument(
-        "telephone",
-        type=str,
-        required=True,
-        help="The user telephone filed can not be empty",
-    )
-    parser.add_argument(
-        "cin", type=str, required=True, help="The user CIN filed can not be empty"
-    )
-    parser.add_argument(
-        "password",
-        type=int,
-        required=True,
-        help="The user password filed can not be empty",
-    )
-    parser.add_argument(
-        "date_naissance",
-        type=str,
-        required=True,
-        help="The user birthday date filed can not be empty",
-    )
-
-    def post(self):
-        data = UserRegister.parser.parse_args()
-        user = UserModel.find_by_numepoli(data.numepoli)
-
-        if user is None:
-            risque = RisqueModel.find_by_numepoli(data.numepoli)
-            if risque is not None and risque.numepoli == data.numepoli:
-                assure = AssureModel.find_by_codeassu(risque.codeassu)
-                if assure.teleassu != data.telephone:
-                    return {"message": "Your number doesn't match the existing one"}
-                user = UserModel(**data)
-            user.save_to_db()
-        else:
-            return {"message": "user with numepoli {} exist".format(data.numepoli)}, 400
-
-        return {"message": "User has been created"}
+        if UserModel.find_by_numepoli(user_data["numepoli"]):
+            return {
+                "message": "user with numepoli {} exist".format(user_data["numepoli"])
+            }, 400
+        user = UserModel(**user_data)
+        user.save_to_db()
+        return {"message": "User has been created"}, 201
 
 
 class User(Resource):
@@ -63,9 +34,22 @@ class User(Resource):
     def get(self, numepoli):
         risque_data = RisqueModel.find_by_numepoli(numepoli)
         user = UserModel.find_by_numepoli(numepoli)
-        if risque_data:
-            return risque_data.json(), 200
-        return {"message": "user not found {}".format(risque_data)}, 400
+        if not risque_data:
+            return {"message": "User {} not found ".format(risque_data.numepoli)}, 400
+        return user_schema.dump(user), 200
+
+
+class UserLogin(Resource):
+    @classmethod
+    def post(cls):
+        try:
+            user_data = user_schema.load(request.get_json())
+        except ValidationError as err:
+            return err.messages, 400
+        user = UserModel.find_by_numepoli(user_data.numepoli)
+
+        if user and safe_str_cmp(user.password, user_data["PASSWORD"]):
+            pass
 
 
 class UserList(Resource):
